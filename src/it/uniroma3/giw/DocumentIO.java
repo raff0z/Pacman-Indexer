@@ -13,7 +13,7 @@ public class DocumentIO {
 	public DocumentIO(){
 		Properties conf = new Properties();
 		try {
-			InputStream inputStream = new FileInputStream("../pacman_configuration.properties");
+			InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("config/pacman_configuration.properties");
 			conf.load(inputStream);
 		} catch (IOException e) {
 			e.printStackTrace();
