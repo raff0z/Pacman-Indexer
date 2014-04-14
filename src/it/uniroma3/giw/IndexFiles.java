@@ -21,10 +21,11 @@ import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.spell.Dictionary;
+import org.apache.lucene.search.spell.LuceneDictionary;
+import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
@@ -118,7 +119,11 @@ public class IndexFiles {
 			// writer.forceMerge(1);
 
 			writer.close();
-
+			
+			System.out.println("Creating dictionary...");
+			
+			didYouMeanMaker(analyzer);
+			
 			Date end = new Date();
 			System.out.println(end.getTime() - start.getTime() + " total milliseconds");
 
@@ -279,5 +284,21 @@ public class IndexFiles {
         titleFieldType.setStored(true);
         
         doc.add(new Field("invertedIndex", "prova", titleFieldType));
+	}
+	
+	private static void didYouMeanMaker(Analyzer analyzer) throws IOException{
+		DocumentIO io = new DocumentIO(); 
+		
+		Directory spellCheckerDir = FSDirectory.open(new File(io.getSpellCheckerPath()));
+
+		Directory indexPathDir = FSDirectory.open(new File(io.getIndexPath()));
+
+		SpellChecker spellChecker = new SpellChecker(spellCheckerDir);
+
+		IndexReader ir = DirectoryReader.open(indexPathDir);
+		Dictionary dic = new LuceneDictionary(ir, "contents");
+		spellChecker.indexDictionary(dic,new IndexWriterConfig(Version.LUCENE_47, analyzer),false);
+		spellChecker.close();
+		
 	}
 }

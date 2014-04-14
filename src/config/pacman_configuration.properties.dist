@@ -1,2 +1,3 @@
 index-path = INDEX_PATH
 documents-path = DOC_PATH
+spell-checker-path = SPELL_CHECKER_PATH
