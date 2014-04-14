@@ -16,9 +16,11 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
+import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.*;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
@@ -190,14 +192,18 @@ public class IndexFiles {
 					// so that the text of the file is tokenized and indexed, but not stored.
 					// Note that FileReader expects the file to be in UTF-8 encoding.
 					// If that's not the case searching for special characters will fail.
-					if (isHtml(doc))
-						setHtmlText(doc,fis);
-					else
+					if (isHtml(doc)){
+						setHtmlTextAndTitle(doc,fis);
+					}
+					else{
 						doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(fis, "UTF-8"))));
-
+						setTitle(doc);
+					}
 					//Set title and short-path
-					setTitle(doc);
 					setShortPath(doc);
+					
+					//Set inverted index
+					// setInvertedIndex(doc);
 
 					if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
 						// New index, so we just add the document (no old document can be there):
@@ -228,13 +234,15 @@ public class IndexFiles {
 		return extension.equals("html");
 	}
 
-	private static void setHtmlText(Document doc, FileInputStream fis) {
+	private static void setHtmlTextAndTitle(Document doc, FileInputStream fis) {
 		InputStream input;
 		try {
 			input = new FileInputStream(doc.get("path"));
 			BodyContentHandler handler = new BodyContentHandler(-1);
 			Metadata metadata = new Metadata();
 			new HtmlParser().parse(input, handler, metadata, new ParseContext());
+			String title = metadata.get("title");
+			doc.add(new StringField("title", title, Field.Store.YES));
 			String plainText = handler.toString();
 			InputStream is = new ByteArrayInputStream(plainText.getBytes());
 			doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(is, "UTF-8"))));
@@ -263,4 +271,13 @@ public class IndexFiles {
 
 		doc.add(new StringField("title", name, Field.Store.YES));
 	}
+	
+	private static void setInvertedIndex(Document doc) {
+		FieldType titleFieldType = new FieldType();
+        titleFieldType.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        titleFieldType.setIndexed(true);
+        titleFieldType.setStored(true);
+        
+        doc.add(new Field("invertedIndex", "prova", titleFieldType));
 	}
+}
