@@ -98,7 +98,6 @@ public class IndexFiles {
 				+ "This indexes the documents in DOCS_PATH, creating a Lucene index"
 				+ "in INDEX_PATH that can be searched with SearchFiles";
 		boolean create = true;
-		
 		io = new DocumentIO();
 		docsPath = io.getDocumentPath();
 		indexPath = io.getIndexPath();
