@@ -43,32 +43,65 @@ import org.xml.sax.SAXException;
  */
 public class IndexFiles {
 
-	private IndexFiles() {}
+	private static String indexPath;
+	private static String docsPath;
+	private static DocumentIO io;
 
+	public IndexFiles() {
+		io = new DocumentIO();
+		indexPath = io.getIndexPath();
+		docsPath = io.getDocumentPath();
+	}
+	
+	public IndexFiles(String indexPath,String docsPath) {
+		this.io = new DocumentIO();
+		this.indexPath = indexPath;
+		this.docsPath = docsPath;
+	}
+
+	public void index(boolean update){
+		final File docDir = new File(docsPath);
+		
+		if (!docDir.exists() || !docDir.canRead()) {
+			//TODO
+			System.exit(1);
+		}
+
+		try {
+
+			Directory dir = FSDirectory.open(new File(indexPath));
+			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_47);
+			IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_47, analyzer);
+
+			if (!update) {
+				iwc.setOpenMode(OpenMode.CREATE);
+			} else {
+				iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
+			}
+
+			IndexWriter writer = new IndexWriter(dir, iwc);
+			indexDocs(writer, docDir);
+
+			writer.close();
+			
+			didYouMeanMaker(analyzer);
+			
+		} catch (IOException e) {
+			//TODO
+		}
+	}
+	
 	/** Index all text files under a directory. */
 	public static void main(String[] args) {
 		String usage = "java org.apache.lucene.demo.IndexFiles"
 				+ " [-index INDEX_PATH] [-docs DOCS_PATH] [-update]\n\n"
 				+ "This indexes the documents in DOCS_PATH, creating a Lucene index"
 				+ "in INDEX_PATH that can be searched with SearchFiles";
-		String indexPath = "index";
-		String docsPath = null;
 		boolean create = true;
-		//		for(int i=0;i<args.length;i++) {
-		//			if ("-index".equals(args[i])) {
-		//				indexPath = args[i+1];
-		//				i++;
-		//			} else if ("-docs".equals(args[i])) {
-		//				docsPath = args[i+1];
-		//				i++;
-		//			} else if ("-update".equals(args[i])) {
-		//				create = false;
-		//			}
-		//		}
-
-		DocumentIO io = new DocumentIO();
-		indexPath = io.getIndexPath();
+		
+		io = new DocumentIO();
 		docsPath = io.getDocumentPath();
+		indexPath = io.getIndexPath();
 
 		if (docsPath == null) {
 			System.err.println("Usage: " + usage);
