@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.net.ContentHandler;
 import java.util.Date;
 
@@ -15,14 +16,12 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.spell.Dictionary;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.spell.SpellChecker;
@@ -30,6 +29,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.IOUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlParser;
@@ -279,13 +279,24 @@ public class IndexFiles {
 			Metadata metadata = new Metadata();
 			new HtmlParser().parse(input, handler, metadata, new ParseContext());
 			String title = metadata.get("title");
-			//verifico che il title non é null
+			//verifico che il title non sia null
 			if(title!=null){
 				doc.add(new StringField("title", title, Field.Store.YES));
 			}
 			String plainText = handler.toString();
 			InputStream is = new ByteArrayInputStream(plainText.getBytes());
-			doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(is, "UTF-8"))));
+			
+			
+//			FieldType contentFieldType = new FieldType();
+//	        contentFieldType.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+//	        contentFieldType.setIndexed(true);
+//	        contentFieldType.setStored(true);
+	        
+			String contents = IOUtils.toString(is);
+	        
+			// doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(is, "UTF-8")));
+			doc.add(new TextField("contents", contents, Field.Store.YES));
+
 		} catch (IOException | SAXException | TikaException e) {
 			e.printStackTrace();
 		}
