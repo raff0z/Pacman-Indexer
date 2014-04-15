@@ -279,7 +279,10 @@ public class IndexFiles {
 			Metadata metadata = new Metadata();
 			new HtmlParser().parse(input, handler, metadata, new ParseContext());
 			String title = metadata.get("title");
-			doc.add(new StringField("title", title, Field.Store.YES));
+			//verifico che il title non é null
+			if(title!=null){
+				doc.add(new StringField("title", title, Field.Store.YES));
+			}
 			String plainText = handler.toString();
 			InputStream is = new ByteArrayInputStream(plainText.getBytes());
 			doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(is, "UTF-8"))));
