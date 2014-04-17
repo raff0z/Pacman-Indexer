@@ -233,7 +233,8 @@ public class IndexFiles {
 						setHtmlTextAndTitle(doc,fis);
 					}
 					else{
-						doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(fis, "UTF-8"))));
+						String contents = IOUtils.toString(fis);
+						doc.add(new TextField("contents", contents, Field.Store.YES));
 						setTitle(doc);
 					}
 					//Set title and short-path
@@ -268,7 +269,7 @@ public class IndexFiles {
 
 		String nameSplitted[] = name.split("\\.");
 		String extension = nameSplitted[nameSplitted.length-1];
-		return extension.equals("html");
+		return extension.equals("html") || extension.equals("htm");
 	}
 
 	private static void setHtmlTextAndTitle(Document doc, FileInputStream fis) {
