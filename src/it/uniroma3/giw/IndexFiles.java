@@ -1,22 +1,17 @@
 package it.uniroma3.giw;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
-import java.net.ContentHandler;
 import java.util.Date;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
@@ -57,38 +52,6 @@ public class IndexFiles {
 		this.io = new DocumentIO();
 		this.indexPath = indexPath;
 		this.docsPath = docsPath;
-	}
-
-	public void index(boolean update){
-		final File docDir = new File(docsPath);
-		
-		if (!docDir.exists() || !docDir.canRead()) {
-			//TODO
-			System.exit(1);
-		}
-
-		try {
-
-			Directory dir = FSDirectory.open(new File(indexPath));
-			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_47);
-			IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_47, analyzer);
-
-			if (!update) {
-				iwc.setOpenMode(OpenMode.CREATE);
-			} else {
-				iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
-			}
-
-			IndexWriter writer = new IndexWriter(dir, iwc);
-			indexDocs(writer, docDir);
-
-			writer.close();
-			
-			didYouMeanMaker(analyzer);
-			
-		} catch (IOException e) {
-			//TODO
-		}
 	}
 	
 	/** Index all text files under a directory. */
@@ -327,19 +290,9 @@ public class IndexFiles {
 		String name = pathSplitted[pathSplitted.length-1];
 
 		String nameSplitted[] = name.split("\\.");
-		String extension = nameSplitted[nameSplitted.length-1];
 
 
 		doc.add(new StringField("title", name, Field.Store.YES));
-	}
-	
-	private static void setInvertedIndex(Document doc) {
-		FieldType titleFieldType = new FieldType();
-        titleFieldType.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-        titleFieldType.setIndexed(true);
-        titleFieldType.setStored(true);
-        
-        doc.add(new Field("invertedIndex", "prova", titleFieldType));
 	}
 	
 	private static void didYouMeanMaker(Analyzer analyzer) throws IOException{
