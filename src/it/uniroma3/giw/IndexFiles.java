@@ -53,6 +53,38 @@ public class IndexFiles {
 		this.indexPath = indexPath;
 		this.docsPath = docsPath;
 	}
+
+	public void index(boolean update){
+		final File docDir = new File(docsPath);
+		
+		if (!docDir.exists() || !docDir.canRead()) {
+			//TODO
+			System.exit(1);
+		}
+
+		try {
+
+			Directory dir = FSDirectory.open(new File(indexPath));
+			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_47);
+			IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_47, analyzer);
+
+			if (!update) {
+				iwc.setOpenMode(OpenMode.CREATE);
+			} else {
+				iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
+			}
+
+			IndexWriter writer = new IndexWriter(dir, iwc);
+			indexDocs(writer, docDir);
+
+			writer.close();
+			
+			didYouMeanMaker(analyzer);
+			
+		} catch (IOException e) {
+			//TODO
+		}
+	}
 	
 	/** Index all text files under a directory. */
 	public static void main(String[] args) {
@@ -289,11 +321,9 @@ public class IndexFiles {
 		String[] pathSplitted = path.split(File.separator);
 		String name = pathSplitted[pathSplitted.length-1];
 
-		String nameSplitted[] = name.split("\\.");
-
-
 		doc.add(new StringField("title", name, Field.Store.YES));
 	}
+	
 	
 	private static void didYouMeanMaker(Analyzer analyzer) throws IOException{
 		DocumentIO io = new DocumentIO(); 
