@@ -108,6 +108,8 @@ public class IndexFiles {
 			System.exit(1);
 		}
 
+		//commento
+		String a;
 
 		Date start = new Date();
 		try {
