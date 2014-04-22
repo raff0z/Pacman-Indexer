@@ -9,6 +9,8 @@ public class DocumentIO {
 	private String indexPath;
 	private String documentPath;
 	private String spellCheckerPath; 
+	private String imagesPath;
+	private String imagesIndextPath;
 	
 	public DocumentIO(){
 		Properties conf = new Properties();
@@ -24,6 +26,8 @@ public class DocumentIO {
 
 		this.indexPath = conf.getProperty("index-path");
 		this.documentPath = conf.getProperty("documents-path");
+		this.imagesPath = conf.getProperty("images-path");
+		this.imagesIndextPath = conf.getProperty("indexImages-path");
 		this.spellCheckerPath = conf.getProperty("spell-checker-path");
 	}
 
@@ -37,6 +41,14 @@ public class DocumentIO {
 
 	public String getSpellCheckerPath() {
 		return spellCheckerPath;
+	}
+
+	public String getImagesPath() {
+		return imagesPath;
+	}
+
+	public String getImagesIndexPath() {
+		return imagesIndextPath;
 	}
 
 }

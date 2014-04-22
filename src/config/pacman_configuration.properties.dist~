@@ -1,5 +1,4 @@
 index-path = INDEX_PATH
-indexImages-path = INDEX_IMG_PATH
 documents-path = DOC_PATH
 images-path = IMG_PATH
 spell-checker-path = SPELL_CHECKER_PATH

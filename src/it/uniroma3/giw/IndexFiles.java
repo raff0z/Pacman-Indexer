@@ -1,12 +1,18 @@
 package it.uniroma3.giw;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
+
+import javax.imageio.ImageIO;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -20,6 +26,8 @@ import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.search.spell.Dictionary;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.spell.SpellChecker;
+import org.apache.lucene.search.suggest.Lookup;
+import org.apache.lucene.search.suggest.tst.TSTLookup;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
@@ -31,6 +39,8 @@ import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
+import com.uwyn.jhighlight.tools.FileUtils;
+
 /** Index all text files under a directory.
  * <p>
  * This is a command-line application demonstrating simple Lucene indexing.
@@ -39,15 +49,18 @@ import org.xml.sax.SAXException;
 public class IndexFiles {
 
 	private static String indexPath;
+	private static String imagesIndexPath;
+	private static String imagesPath;
 	private static String docsPath;
 	private static DocumentIO io;
 
 	public IndexFiles() {
 		io = new DocumentIO();
 		indexPath = io.getIndexPath();
+		imagesPath = io.getImagesPath();
 		docsPath = io.getDocumentPath();
 	}
-	
+
 	public IndexFiles(String indexPath,String docsPath) {
 		this.io = new DocumentIO();
 		this.indexPath = indexPath;
@@ -56,7 +69,7 @@ public class IndexFiles {
 
 	public void index(boolean update){
 		final File docDir = new File(docsPath);
-		
+
 		if (!docDir.exists() || !docDir.canRead()) {
 			//TODO
 			System.exit(1);
@@ -78,14 +91,14 @@ public class IndexFiles {
 			indexDocs(writer, docDir);
 
 			writer.close();
-			
+
 			didYouMeanMaker(analyzer);
-			
+
 		} catch (IOException e) {
 			//TODO
 		}
 	}
-	
+
 	/** Index all text files under a directory. */
 	public static void main(String[] args) {
 		String usage = "java org.apache.lucene.demo.IndexFiles"
@@ -96,6 +109,8 @@ public class IndexFiles {
 		io = new DocumentIO();
 		docsPath = io.getDocumentPath();
 		indexPath = io.getIndexPath();
+		imagesPath = io.getImagesPath();
+		imagesIndexPath = io.getImagesIndexPath();
 
 		if (docsPath == null) {
 			System.err.println("Usage: " + usage);
@@ -107,9 +122,6 @@ public class IndexFiles {
 			System.out.println("Document directory '" +docDir.getAbsolutePath()+ "' does not exist or is not readable, please check the path");
 			System.exit(1);
 		}
-
-		//commento
-		String a;
 
 		Date start = new Date();
 		try {
@@ -135,24 +147,26 @@ public class IndexFiles {
 			// size to the JVM (eg add -Xmx512m or -Xmx1g):
 			//
 			// iwc.setRAMBufferSizeMB(256.0);
+			ImageIndexer imgIndexer = new ImageIndexer();
+			imgIndexer.startIndex(imagesIndexPath, imagesPath);
 
-			IndexWriter writer = new IndexWriter(dir, iwc);
-			indexDocs(writer, docDir);
-
-			// NOTE: if you want to maximize search performance,
-			// you can optionally call forceMerge here.  This can be
-			// a terribly costly operation, so generally it's only
-			// worth it when your index is relatively static (ie
-			// you're done adding documents to it):
-			//
-			// writer.forceMerge(1);
-
-			writer.close();
-			
-			System.out.println("Creating dictionary...");
-			
-			didYouMeanMaker(analyzer);
-			
+//			IndexWriter writer = new IndexWriter(dir, iwc);
+//			indexDocs(writer, docDir);
+//
+//			// NOTE: if you want to maximize search performance,
+//			// you can optionally call forceMerge here.  This can be
+//			// a terribly costly operation, so generally it's only
+//			// worth it when your index is relatively static (ie
+//			// you're done adding documents to it):
+//			//
+//			// writer.forceMerge(1);
+//
+//			writer.close();
+//
+//			System.out.println("Creating dictionary...");
+//
+//			didYouMeanMaker(analyzer);
+//
 			Date end = new Date();
 			System.out.println(end.getTime() - start.getTime() + " total milliseconds");
 
@@ -236,7 +250,7 @@ public class IndexFiles {
 					}
 					//Set title and short-path
 					setShortPath(doc);
-					
+
 					//Set inverted index
 					// setInvertedIndex(doc);
 
@@ -251,12 +265,22 @@ public class IndexFiles {
 						System.out.println("updating " + file);
 						writer.updateDocument(new Term("path", file.getPath()), doc);
 					}
-
-				} finally {
+				}
+				finally {
 					fis.close();
 				}
 			}
 		}
+	}
+
+	private static boolean isImage(File file) {
+		String path = file.getAbsolutePath();
+		String[] pathSplitted = path.split(File.separator);
+		String name = pathSplitted[pathSplitted.length-1];
+
+		String nameSplitted[] = name.split("\\.");
+		String extension = nameSplitted[nameSplitted.length-1];
+		return extension.equals("jpg");
 	}
 
 	private static boolean isHtml(Document doc) {
@@ -278,29 +302,29 @@ public class IndexFiles {
 			new HtmlParser().parse(input, handler, metadata, new ParseContext());
 			String title = metadata.get("title");
 			//String title = metadata.get("og:title");
-			
+
 			//verifico che il title non sia null
 			if(title!=null){
 				doc.add(new StringField("title", title, Field.Store.YES));
 			}
-			
+
 			String keywords = metadata.get("keywords");
 			if(keywords!=null){
 				doc.add(new TextField("keywords", keywords, Field.Store.YES));
 			}
-			
-			
+
+
 			String plainText = handler.toString();
 			InputStream is = new ByteArrayInputStream(plainText.getBytes());
-			
-			
-//			FieldType contentFieldType = new FieldType();
-//	        contentFieldType.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-//	        contentFieldType.setIndexed(true);
-//	        contentFieldType.setStored(true);
-	        
+
+
+			//			FieldType contentFieldType = new FieldType();
+			//	        contentFieldType.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+			//	        contentFieldType.setIndexed(true);
+			//	        contentFieldType.setStored(true);
+
 			String contents = IOUtils.toString(is);
-	        
+
 			// doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(is, "UTF-8")));
 			doc.add(new TextField("contents", contents, Field.Store.YES));
 
@@ -325,11 +349,11 @@ public class IndexFiles {
 
 		doc.add(new StringField("title", name, Field.Store.YES));
 	}
-	
-	
+
+
 	private static void didYouMeanMaker(Analyzer analyzer) throws IOException{
 		DocumentIO io = new DocumentIO(); 
-		
+
 		Directory spellCheckerDir = FSDirectory.open(new File(io.getSpellCheckerPath()));
 
 		Directory indexPathDir = FSDirectory.open(new File(io.getIndexPath()));
@@ -338,8 +362,9 @@ public class IndexFiles {
 
 		IndexReader ir = DirectoryReader.open(indexPathDir);
 		Dictionary dic = new LuceneDictionary(ir, "contents");
+
 		spellChecker.indexDictionary(dic,new IndexWriterConfig(Version.LUCENE_47, analyzer),false);
 		spellChecker.close();
-		
+
 	}
 }

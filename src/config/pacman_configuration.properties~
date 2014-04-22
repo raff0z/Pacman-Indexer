@@ -1,0 +1,4 @@
+index-path = /home/andrea/giw/Pacman-Index
+documents-path = /home/andrea/documentiLucene/docs
+images-path = /home/andrea/documentiLucene/images
+spell-checker-path = /home/andrea/giw/Pacman-SpellChecker
