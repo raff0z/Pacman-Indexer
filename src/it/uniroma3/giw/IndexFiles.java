@@ -365,6 +365,5 @@ public class IndexFiles {
 
 		spellChecker.indexDictionary(dic,new IndexWriterConfig(Version.LUCENE_47, analyzer),false);
 		spellChecker.close();
-
 	}
 }

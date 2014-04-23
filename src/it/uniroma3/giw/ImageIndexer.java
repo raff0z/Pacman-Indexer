@@ -216,7 +216,10 @@ public class ImageIndexer {
 		String nameSplitted[] = name.split("\\.");
 		String title = nameSplitted[0];
 		
+		title = title.replaceAll("[^a-zA-Z0-9]+"," ");//pulizia della stringa
+		
 		doc.add(new TextField("title", title, Field.Store.YES));
+		doc.add(new TextField("name", name, Field.Store.YES));
 	}
 
 
