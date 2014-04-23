@@ -150,23 +150,23 @@ public class IndexFiles {
 			ImageIndexer imgIndexer = new ImageIndexer();
 			imgIndexer.startIndex(imagesIndexPath, imagesPath);
 
-//			IndexWriter writer = new IndexWriter(dir, iwc);
-//			indexDocs(writer, docDir);
-//
-//			// NOTE: if you want to maximize search performance,
-//			// you can optionally call forceMerge here.  This can be
-//			// a terribly costly operation, so generally it's only
-//			// worth it when your index is relatively static (ie
-//			// you're done adding documents to it):
-//			//
-//			// writer.forceMerge(1);
-//
-//			writer.close();
-//
-//			System.out.println("Creating dictionary...");
-//
-//			didYouMeanMaker(analyzer);
-//
+			IndexWriter writer = new IndexWriter(dir, iwc);
+			indexDocs(writer, docDir);
+
+			// NOTE: if you want to maximize search performance,
+			// you can optionally call forceMerge here.  This can be
+			// a terribly costly operation, so generally it's only
+			// worth it when your index is relatively static (ie
+			// you're done adding documents to it):
+			//
+			// writer.forceMerge(1);
+
+			writer.close();
+
+			System.out.println("Creating dictionary...");
+
+			didYouMeanMaker(analyzer);
+
 			Date end = new Date();
 			System.out.println(end.getTime() - start.getTime() + " total milliseconds");
 
