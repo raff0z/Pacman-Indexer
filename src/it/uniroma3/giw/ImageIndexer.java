@@ -95,9 +95,9 @@ public class ImageIndexer {
 
 			writer.close();
 
-			System.out.println("Creating dictionary...");
-
-			didYouMeanMaker(analyzer);
+//			System.out.println("Creating dictionary...");
+//
+//			didYouMeanMaker(analyzer);
 
 			Date end = new Date();
 			System.out.println(end.getTime() - start.getTime() + " total milliseconds");
