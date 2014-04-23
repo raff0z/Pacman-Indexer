@@ -177,8 +177,6 @@ public class ImageIndexer {
 					// so that the text of the file is tokenized and indexed, but not stored.
 					// Note that FileReader expects the file to be in UTF-8 encoding.
 					// If that's not the case searching for special characters will fail.
-					String contents = IOUtils.toString(fis);
-					doc.add(new TextField("contents", contents, Field.Store.YES));
 					setTitle(doc);
 					
 					//Set title and short-path
@@ -220,7 +218,10 @@ public class ImageIndexer {
 		String[] pathSplitted = path.split(File.separator);
 		String name = pathSplitted[pathSplitted.length-1];
 
-		doc.add(new StringField("title", name, Field.Store.YES));
+		String nameSplitted[] = name.split("\\.");
+		String title = nameSplitted[0];
+		
+		doc.add(new StringField("title", title, Field.Store.YES));
 	}
 
 
