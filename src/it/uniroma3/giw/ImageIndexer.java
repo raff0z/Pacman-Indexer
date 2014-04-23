@@ -1,10 +1,5 @@
 package it.uniroma3.giw;
 
-import net.semanticmetadata.lire.DocumentBuilder;
-import net.semanticmetadata.lire.DocumentBuilderFactory;
-import net.semanticmetadata.lire.utils.FileUtils;
-import net.semanticmetadata.lire.utils.LuceneUtils;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -221,7 +216,7 @@ public class ImageIndexer {
 		String nameSplitted[] = name.split("\\.");
 		String title = nameSplitted[0];
 		
-		doc.add(new StringField("title", title, Field.Store.YES));
+		doc.add(new TextField("title", title, Field.Store.YES));
 	}
 
 
